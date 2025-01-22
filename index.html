@@ -7,21 +7,32 @@
     <script>
         function calculateVDOT() {
             // Récupérer les valeurs utilisateur
-            let distanceKm = parseFloat(document.getElementById("distanceKm").value);
+            let distanceChoice = document.getElementById("distanceChoice").value;
             let hours = parseInt(document.getElementById("hours").value) || 0;
             let minutes = parseInt(document.getElementById("minutes").value) || 0;
             let seconds = parseInt(document.getElementById("seconds").value) || 0;
+
+            // Vérifier si une distance a été sélectionnée
+            if (!distanceChoice) {
+                document.getElementById("result").innerHTML = "Veuillez sélectionner une distance valide.";
+                return;
+            }
+
+            // Convertir la distance choisie en km
+            let distanceKm = parseFloat(distanceChoice);
 
             // Convertir le temps total en secondes
             let totalTimeSec = hours * 3600 + minutes * 60 + seconds;
 
             if (isNaN(distanceKm) || totalTimeSec <= 0) {
-                document.getElementById("result").innerHTML = "Veuillez entrer une distance et un temps valides.";
+                document.getElementById("result").innerHTML = "Veuillez entrer un temps valide.";
                 return;
             }
 
-            // Calculer la vitesse (m/s) et la VO2 max
+            // Convertir la distance en mètres et calculer la vitesse (m/min)
             let velocityMPerMin = (distanceKm * 1000) / totalTimeSec * 60; // vitesse en m/min
+
+            // Calculer VO2 max (formule Daniels)
             let vo2 = -4.6 + (0.182258 * velocityMPerMin) + (0.000104 * Math.pow(velocityMPerMin, 2));
 
             // Facteur d'efficacité pour obtenir le VDOT
@@ -30,20 +41,22 @@
             // Afficher le VDOT
             document.getElementById("vdot").innerHTML = `Votre VDOT estimé : ${vdot.toFixed(2)}`;
 
-            // Distances cibles (en km) et leur facteur de correction pour le temps
+            // Distances cibles (en km) et leurs facteurs de correction Daniels
             let distances = {
+                "5 km": 5,
                 "10 km": 10,
                 "Semi-marathon": 21.097,
                 "Marathon": 42.195
             };
 
-            // Facteurs de correction Daniels
             let correctionFactors = {
-                "10 km": 1.0,
-                "Semi-marathon": 1.06,
-                "Marathon": 1.15
+                "5 km": 0.97, // Plus rapide que le 10 km
+                "10 km": 1.0, // Référence
+                "Semi-marathon": 1.06, // 6% plus lent que le 10 km
+                "Marathon": 1.15 // 15% plus lent que le 10 km
             };
 
+            // Calculer les prédictions pour chaque distance
             let results = "";
             for (let [name, distance] of Object.entries(distances)) {
                 let correctionFactor = correctionFactors[name];
@@ -67,10 +80,16 @@
 </head>
 <body>
     <h1>Calculateur VDOT</h1>
-    <p>Entrez une distance et un temps de référence pour estimer vos performances sur 10 km, semi-marathon et marathon.</p>
+    <p>Entrez une distance et un temps de référence pour estimer vos performances sur 5 km, 10 km, semi-marathon et marathon.</p>
 
-    <label>Distance de référence (en km) :</label>
-    <input type="number" id="distanceKm" step="0.01" placeholder="Par exemple : 10"><br><br>
+    <label>Distance de référence :</label>
+    <select id="distanceChoice">
+        <option value="">-- Sélectionnez une distance --</option>
+        <option value="5">5 km</option>
+        <option value="10">10 km</option>
+        <option value="21.097">Semi-marathon</option>
+        <option value="42.195">Marathon</option>
+    </select><br><br>
 
     <label>Temps de référence :</label>
     <input type="number" id="hours" placeholder="Heures" min="0"> :
