@@ -6,39 +6,68 @@
     <title>Calculateur VDOT</title>
     <script>
         function calculateVDOT() {
+            // Récupérer les valeurs utilisateur
             let distanceKm = parseFloat(document.getElementById("distanceKm").value);
-            let timeSec = parseFloat(document.getElementById("timeSec").value);
-            let targetDist = parseFloat(document.getElementById("targetDist").value);
+            let hours = parseInt(document.getElementById("hours").value) || 0;
+            let minutes = parseInt(document.getElementById("minutes").value) || 0;
+            let seconds = parseInt(document.getElementById("seconds").value) || 0;
 
-            if (isNaN(distanceKm) || isNaN(timeSec) || isNaN(targetDist)) {
-                document.getElementById("result").innerHTML = "Veuillez remplir tous les champs correctement.";
+            // Convertir le temps total en secondes
+            let totalTimeSec = hours * 3600 + minutes * 60 + seconds;
+
+            if (isNaN(distanceKm) || totalTimeSec <= 0) {
+                document.getElementById("result").innerHTML = "Veuillez entrer une distance et un temps valides.";
                 return;
             }
 
-            let velocity = distanceKm / (timeSec / 3600); // vitesse en km/h
-            let vo2max = 0.182258 * velocity + 0.000104 * Math.pow(velocity, 2); // VO2 max
+            // Calculer la vitesse en km/h
+            let velocity = distanceKm / (totalTimeSec / 3600); 
+
+            // Calculer le VDOT (approximé avec des constantes de Daniels)
+            let vo2max = 0.182258 * velocity + 0.000104 * Math.pow(velocity, 2);
             let efficiency = 0.2989558 * velocity;
             let vdot = vo2max / efficiency;
 
-            let predictedTime = targetDist / velocity * 3600; // temps estimé en secondes
-            let hours = Math.floor(predictedTime / 3600);
-            let minutes = Math.floor((predictedTime % 3600) / 60);
-            let seconds = Math.round(predictedTime % 60);
+            // Distances cibles
+            let distances = {
+                "10 km": 10,
+                "Semi-marathon": 21.097,
+                "Marathon": 42.195
+            };
 
-            document.getElementById("result").innerHTML = 
-                `Temps prédit pour ${targetDist} km : ${hours}h ${minutes}m ${seconds}s`;
+            // Générer les résultats pour chaque distance cible
+            let results = "";
+            for (let [name, distance] of Object.entries(distances)) {
+                let predictedTimeSec = (distance / velocity) * 3600;
+                let predHours = Math.floor(predictedTimeSec / 3600);
+                let predMinutes = Math.floor((predictedTimeSec % 3600) / 60);
+                let predSeconds = Math.round(predictedTimeSec % 60);
+
+                results += `<li>${name} : ${predHours}h ${predMinutes}m ${predSeconds}s</li>`;
+            }
+
+            // Afficher les résultats
+            document.getElementById("result").innerHTML = `
+                <h3>Résultats estimés</h3>
+                <ul>${results}</ul>
+            `;
         }
     </script>
 </head>
 <body>
     <h1>Calculateur VDOT</h1>
-    <label>Distance de référence (km) :</label>
-    <input type="number" id="distanceKm" step="0.01"><br><br>
-    <label>Temps de référence (secondes) :</label>
-    <input type="number" id="timeSec" step="1"><br><br>
-    <label>Distance cible (km) :</label>
-    <input type="number" id="targetDist" step="0.01"><br><br>
+    <p>Entrez une distance et un temps de référence pour estimer vos performances sur 10 km, semi-marathon et marathon.</p>
+
+    <label>Distance de référence (en km) :</label>
+    <input type="number" id="distanceKm" step="0.01" placeholder="Par exemple : 5"><br><br>
+
+    <label>Temps de référence :</label>
+    <input type="number" id="hours" placeholder="Heures" min="0"> :
+    <input type="number" id="minutes" placeholder="Minutes" min="0" max="59"> :
+    <input type="number" id="seconds" placeholder="Secondes" min="0" max="59"><br><br>
+
     <button onclick="calculateVDOT()">Calculer</button>
-    <p id="result"></p>
+
+    <div id="result"></div>
 </body>
 </html>
