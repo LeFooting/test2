@@ -20,35 +20,34 @@
                 return;
             }
 
-            // Calculer la vitesse en km/h
-            let velocity = distanceKm / (totalTimeSec / 3600); 
+            // Calculer la vitesse (m/s)
+            let velocity = (distanceKm * 1000) / totalTimeSec; // Convertir km en m
+            let vo2 = (0.8 + 0.1894393 * Math.exp(-0.012778 * totalTimeSec)) * velocity; // VO2 max estimation
+            let vdot = vo2 / (0.2989558 * Math.pow(velocity, 0.25)); // Daniels VDOT
 
-            // Calculer le VDOT (approximé avec des constantes de Daniels)
-            let vo2max = 0.182258 * velocity + 0.000104 * Math.pow(velocity, 2);
-            let efficiency = 0.2989558 * velocity;
-            let vdot = vo2max / efficiency;
+            // Afficher le VDOT
+            document.getElementById("vdot").innerHTML = `Votre VDOT estimé : ${vdot.toFixed(2)}`;
 
-            // Distances cibles
+            // Prédictions pour 10 km, semi-marathon, et marathon
             let distances = {
                 "10 km": 10,
                 "Semi-marathon": 21.097,
                 "Marathon": 42.195
             };
 
-            // Générer les résultats pour chaque distance cible
             let results = "";
             for (let [name, distance] of Object.entries(distances)) {
-                let predictedTimeSec = (distance / velocity) * 3600;
-                let predHours = Math.floor(predictedTimeSec / 3600);
-                let predMinutes = Math.floor((predictedTimeSec % 3600) / 60);
-                let predSeconds = Math.round(predictedTimeSec % 60);
+                let adjustedTimeSec = (totalTimeSec / distanceKm) * distance;
+                let hours = Math.floor(adjustedTimeSec / 3600);
+                let minutes = Math.floor((adjustedTimeSec % 3600) / 60);
+                let seconds = Math.round(adjustedTimeSec % 60);
 
-                results += `<li>${name} : ${predHours}h ${predMinutes}m ${predSeconds}s</li>`;
+                results += `<li>${name} : ${hours}h ${minutes}m ${seconds}s</li>`;
             }
 
             // Afficher les résultats
             document.getElementById("result").innerHTML = `
-                <h3>Résultats estimés</h3>
+                <h3>Estimations des temps de course</h3>
                 <ul>${results}</ul>
             `;
         }
@@ -68,6 +67,7 @@
 
     <button onclick="calculateVDOT()">Calculer</button>
 
+    <div id="vdot"></div>
     <div id="result"></div>
 </body>
 </html>
