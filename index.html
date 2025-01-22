@@ -20,12 +20,8 @@
                 return;
             }
 
-            // Convertir la distance en mètres et calculer la vitesse (m/min)
-            let distanceM = distanceKm * 1000; // km en m
-            let velocityMPerSec = distanceM / totalTimeSec; // m/s
-            let velocityMPerMin = velocityMPerSec * 60; // m/min
-
-            // Calculer VO2 max (formule Daniels)
+            // Calculer la vitesse (m/s) et la VO2 max
+            let velocityMPerMin = (distanceKm * 1000) / totalTimeSec * 60; // vitesse en m/min
             let vo2 = -4.6 + (0.182258 * velocityMPerMin) + (0.000104 * Math.pow(velocityMPerMin, 2));
 
             // Facteur d'efficacité pour obtenir le VDOT
@@ -34,23 +30,29 @@
             // Afficher le VDOT
             document.getElementById("vdot").innerHTML = `Votre VDOT estimé : ${vdot.toFixed(2)}`;
 
-            // Distances cibles (en km)
+            // Distances cibles (en km) et leur facteur de correction pour le temps
             let distances = {
                 "10 km": 10,
                 "Semi-marathon": 21.097,
                 "Marathon": 42.195
             };
 
-            // Calculer les prédictions pour chaque distance
+            // Facteurs de correction Daniels
+            let correctionFactors = {
+                "10 km": 1.0,
+                "Semi-marathon": 1.06,
+                "Marathon": 1.15
+            };
+
             let results = "";
             for (let [name, distance] of Object.entries(distances)) {
-                // Temps estimé basé sur le VDOT
-                let predictedTimeSec = (totalTimeSec / distanceKm) * distance;
+                let correctionFactor = correctionFactors[name];
+                let adjustedTimeSec = (totalTimeSec / distanceKm) * distance * correctionFactor;
 
                 // Conversion en hh:mm:ss
-                let predHours = Math.floor(predictedTimeSec / 3600);
-                let predMinutes = Math.floor((predictedTimeSec % 3600) / 60);
-                let predSeconds = Math.round(predictedTimeSec % 60);
+                let predHours = Math.floor(adjustedTimeSec / 3600);
+                let predMinutes = Math.floor((adjustedTimeSec % 3600) / 60);
+                let predSeconds = Math.round(adjustedTimeSec % 60);
 
                 results += `<li>${name} : ${predHours}h ${predMinutes}m ${predSeconds}s</li>`;
             }
@@ -68,7 +70,7 @@
     <p>Entrez une distance et un temps de référence pour estimer vos performances sur 10 km, semi-marathon et marathon.</p>
 
     <label>Distance de référence (en km) :</label>
-    <input type="number" id="distanceKm" step="0.01" placeholder="Par exemple : 5"><br><br>
+    <input type="number" id="distanceKm" step="0.01" placeholder="Par exemple : 10"><br><br>
 
     <label>Temps de référence :</label>
     <input type="number" id="hours" placeholder="Heures" min="0"> :
