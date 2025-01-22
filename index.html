@@ -20,29 +20,39 @@
                 return;
             }
 
-            // Calculer la vitesse (m/s)
-            let velocity = (distanceKm * 1000) / totalTimeSec; // Convertir km en m
-            let vo2 = (0.8 + 0.1894393 * Math.exp(-0.012778 * totalTimeSec)) * velocity; // VO2 max estimation
-            let vdot = vo2 / (0.2989558 * Math.pow(velocity, 0.25)); // Daniels VDOT
+            // Convertir la distance en mètres et calculer la vitesse (m/min)
+            let distanceM = distanceKm * 1000; // km en m
+            let velocityMPerSec = distanceM / totalTimeSec; // m/s
+            let velocityMPerMin = velocityMPerSec * 60; // m/min
+
+            // Calculer VO2 max (formule Daniels)
+            let vo2 = -4.6 + (0.182258 * velocityMPerMin) + (0.000104 * Math.pow(velocityMPerMin, 2));
+
+            // Facteur d'efficacité pour obtenir le VDOT
+            let vdot = vo2 / (0.2989558 * Math.pow(velocityMPerMin, 0.25));
 
             // Afficher le VDOT
             document.getElementById("vdot").innerHTML = `Votre VDOT estimé : ${vdot.toFixed(2)}`;
 
-            // Prédictions pour 10 km, semi-marathon, et marathon
+            // Distances cibles (en km)
             let distances = {
                 "10 km": 10,
                 "Semi-marathon": 21.097,
                 "Marathon": 42.195
             };
 
+            // Calculer les prédictions pour chaque distance
             let results = "";
             for (let [name, distance] of Object.entries(distances)) {
-                let adjustedTimeSec = (totalTimeSec / distanceKm) * distance;
-                let hours = Math.floor(adjustedTimeSec / 3600);
-                let minutes = Math.floor((adjustedTimeSec % 3600) / 60);
-                let seconds = Math.round(adjustedTimeSec % 60);
+                // Temps estimé basé sur le VDOT
+                let predictedTimeSec = (totalTimeSec / distanceKm) * distance;
 
-                results += `<li>${name} : ${hours}h ${minutes}m ${seconds}s</li>`;
+                // Conversion en hh:mm:ss
+                let predHours = Math.floor(predictedTimeSec / 3600);
+                let predMinutes = Math.floor((predictedTimeSec % 3600) / 60);
+                let predSeconds = Math.round(predictedTimeSec % 60);
+
+                results += `<li>${name} : ${predHours}h ${predMinutes}m ${predSeconds}s</li>`;
             }
 
             // Afficher les résultats
